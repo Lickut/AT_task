@@ -1,9 +1,10 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using System;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 
 namespace AT_task
 {
@@ -12,7 +13,7 @@ namespace AT_task
 	{
 		private IWebDriver driver;
 		private TablePage page;
-		private string tablePageURL = "/path/to/html/page/with/tables";
+		private string tablePageURL = "file:///C:/Users/Denys_Verotskyi/Documents/Projects/test/test/Tests/Resources/table_example.html";
 
 		[TestFixtureSetUp]
 		public void openDriver ()
@@ -27,26 +28,29 @@ namespace AT_task
 			page = new TablePage (driver);
 		}
 
-		[TestCase ("sortedAscendingOneRow", "Asc", "Hire Date", true)]
-		[TestCase ("sortedAscendingEmpty", "Asc", "Hire Date", true)]
-		[TestCase ("sortedAscendingWithSameValues", "Asc", "Hire Date", true)]
-		[TestCase ("sortedAscendingWithDifferentValues", "Asc", "Hire Date", true)]
-		[TestCase ("sortedDescendingOneRow", "Desc", "Hire Date", true)]
-		[TestCase ("sortedDescendingEmptyTable", "Desc", "Hire Date", true)]
-		[TestCase ("sortedDescendingWithSameValues", "Desc", "Hire Date", true)]
-		[TestCase ("sortedDescendingWithDifferentValues", "Desc", "Hire Date", true)]
-		[TestCase ("notSortedAscending", "Asc", "Hire Date", false)]
-		[TestCase ("notSortedDescending", "Desc", "Hire Date", false)]
-		public void TestTableIsOrdered (string tableID, string orderType,string columnName, bool isSorted)
+		[TestCase ("sortedAscendingOneRow", "Asc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedAscendingEmpty", "Asc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedAscendingWithSameValues", "Asc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedAscendingWithDifferentValues", "Asc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedDescendingOneRow", "Desc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedDescendingEmptyTable", "Desc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedDescendingWithSameValues", "Desc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("sortedDescendingWithDifferentValues", "Desc", "Hire Date", "dd-MM-yyyy", true)]
+		[TestCase ("notSortedAscending", "Asc", "Hire Date", "dd-MM-yyyy", false)]
+		[TestCase ("notSortedDescending", "Desc", "Hire Date", "dd-MM-yyyy", false)]
+		public void TestTableIsOrdered (string tableID, string orderType, string columnName, string dateFormat, bool isSorted)
 		{
-			IList<DateTime> hireDates = GetHireDatesFromTable (page.getTableRows (tableID), columnName);
-			switch (orderType) {
-			case "Asc":
-				Assert.AreEqual (isSorted, OrderUtils.IsSorted (hireDates, new sortDateAscending ()));
-				break;
-			case "Desc":
-				Assert.AreEqual (isSorted, OrderUtils.IsSorted (hireDates, new sortDateDescending ()));
-				break;
+			IList<string> columnStringDates = GetColumnDataFromTable (page.getTableRows (tableID), columnName);
+			if (columnStringDates.Count != 0) {
+				var columnDates = columnStringDates.Select (x => DateTime.ParseExact (x, dateFormat, CultureInfo.InvariantCulture)).ToList ();
+				switch (orderType) {
+				case "Asc":
+					Assert.AreEqual (isSorted, OrderUtils.IsSorted (columnDates, new sortDateAscending ()));
+					break;
+				case "Desc":
+					Assert.AreEqual (isSorted, OrderUtils.IsSorted (columnDates, new sortDateDescending ()));
+					break;
+				}
 			}
 		}
 
@@ -56,17 +60,16 @@ namespace AT_task
 			driver.Quit ();
 		}
 
-		public IList<DateTime> GetHireDatesFromTable (IList<IList<string>> table, string columnName)
+		public IList<string> GetColumnDataFromTable (IList<IList<string>> table, string columnName)
 		{
-			int hireDateIndex = table [0].IndexOf (columnName);
-			IList<DateTime> hireDates = new List<DateTime> ();
+			int columnIndex = table [0].IndexOf (columnName);
+			IList<string> column = new List<string> ();
 			for (int i = 1; i < table.Count; i++) {
-				hireDates.Add (Convert.ToDateTime (table [i] [hireDateIndex]));
+				column.Add (table [i] [columnIndex]);
 			}
-			return hireDates;
+			return column;
 		}
 
 
 	}
 }
-
