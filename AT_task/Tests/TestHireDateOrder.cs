@@ -13,7 +13,6 @@ namespace AT_task
 		private IWebDriver driver;
 		private TablePage page;
 		private string tablePageURL = "/path/to/html/page/with/tables";
-		private string hireDateColumnName = "Hire Date";
 
 		[TestFixtureSetUp]
 		public void openDriver ()
@@ -28,19 +27,19 @@ namespace AT_task
 			page = new TablePage (driver);
 		}
 
-		[TestCase ("sortedAscending1", "Asc", true)]
-		[TestCase ("sortedAscending2", "Asc", true)]
-		[TestCase ("sortedAscending3", "Asc", true)]
-		[TestCase ("sortedAscending4", "Asc", true)]
-		[TestCase ("sortedDescending1", "Desc", true)]
-		[TestCase ("sortedDescending2", "Desc", true)]
-		[TestCase ("sortedDescending3", "Desc", true)]
-		[TestCase ("sortedDescending4", "Desc", true)]
-		[TestCase ("notSortedAscending1", "Asc", false)]
-		[TestCase ("notSortedDescending1", "Desc", false)]
-		public void TestTableIsOrdered (string tableID, string orderType, bool isSorted)
+		[TestCase ("sortedAscendingOneRow", "Asc", "Hire Date", true)]
+		[TestCase ("sortedAscendingEmpty", "Asc", "Hire Date", true)]
+		[TestCase ("sortedAscendingWithSameValues", "Asc", "Hire Date", true)]
+		[TestCase ("sortedAscendingWithDifferentValues", "Asc", "Hire Date", true)]
+		[TestCase ("sortedDescendingOneRow", "Desc", "Hire Date", true)]
+		[TestCase ("sortedDescendingEmptyTable", "Desc", "Hire Date", true)]
+		[TestCase ("sortedDescendingWithSameValues", "Desc", "Hire Date", true)]
+		[TestCase ("sortedDescendingWithDifferentValues", "Desc", "Hire Date", true)]
+		[TestCase ("notSortedAscending", "Asc", "Hire Date", false)]
+		[TestCase ("notSortedDescending", "Desc", "Hire Date", false)]
+		public void TestTableIsOrdered (string tableID, string orderType,string columnName, bool isSorted)
 		{
-			IList<DateTime> hireDates = GetHireDatesFromTable (page.getTableRows (tableID));
+			IList<DateTime> hireDates = GetHireDatesFromTable (page.getTableRows (tableID), columnName);
 			switch (orderType) {
 			case "Asc":
 				Assert.AreEqual (isSorted, OrderUtils.IsSorted (hireDates, new sortDateAscending ()));
@@ -57,9 +56,9 @@ namespace AT_task
 			driver.Quit ();
 		}
 
-		public IList<DateTime> GetHireDatesFromTable (IList<IList<string>> table)
+		public IList<DateTime> GetHireDatesFromTable (IList<IList<string>> table, string columnName)
 		{
-			int hireDateIndex = table [0].IndexOf (hireDateColumnName);
+			int hireDateIndex = table [0].IndexOf (columnName);
 			IList<DateTime> hireDates = new List<DateTime> ();
 			for (int i = 1; i < table.Count; i++) {
 				hireDates.Add (Convert.ToDateTime (table [i] [hireDateIndex]));
